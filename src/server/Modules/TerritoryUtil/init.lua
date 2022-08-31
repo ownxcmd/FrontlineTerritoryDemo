@@ -1,15 +1,14 @@
-local TerritoryUtil = {}
+
 
 local Players = game:GetService("Players")
+local ServerScriptService = game:GetService("ServerScriptService")
 
-type TerritoryBlockInfo = {
-    Set: table, -- do later
-    CFrame: CFrame,
-    Size: Vector3,
-}
+local ServerModules = ServerScriptService:WaitForChild("Modules")
 
-local GJK = require(script:WaitForChild("GJK"))
-local Vertices = require(script:WaitForChild("Vertices"))
+local GJK = require(script.GJK)
+local Vertices = require(script.Vertices)
+
+local Types = require(ServerModules.Types)
 
 local function PointCloud(set, direction)
 	local max, maxDot = set[1], set[1]:Dot(direction)
@@ -23,23 +22,23 @@ local function PointCloud(set, direction)
 	return max
 end
 
+local TerritoryUtil: Types.TerritoryUtil = {}
+
 TerritoryUtil.territories = {}
--- return the index of the new territory section for use later
-function TerritoryUtil.addTerritorySection(Part: BasePart): number
-    print("Adding part " .. tostring(Part.Position))
-    TerritoryUtil.territories[Part] = {
-		Set = Vertices.Block(Part.CFrame, Part.Size/2),
-		CFrame = Part.CFrame,
-		Size = Part.Size
+TerritoryUtil.territoryCoordinates = {}
+-- Adds a new territory section to the territory grid. 
+function TerritoryUtil.addTerritorySection(TerritoryBlock: Types.TerritoryBlockInfo, Pos: Vector3?): Types.TerritoryBlockInfo
+    TerritoryUtil.territories[Pos] = {
+		Set = Vertices.Block(TerritoryBlock.CFrame, TerritoryBlock.Size/2),
+		CFrame = TerritoryBlock.CFrame,
+		Size = TerritoryBlock.Size,
+        Part = TerritoryBlock.DebugPart,
 	}
+
+    return TerritoryUtil.territories[TerritoryBlock]
 end
 
-function TerritoryUtil.getPlayersinTerritory(Part: Part): {[number]: Player}
-    local territory = TerritoryUtil.territories[Part]
-    if not territory then
-        error("Part is not a territory")
-    end
-
+function TerritoryUtil.getPlayersinTerritory(Block: Types.TerritoryBlockInfo): {[number]: Player}
     local playersInTerritory: {[number]: Player} = {}
 
     -- get the players in the territory and return them in a table
@@ -54,7 +53,7 @@ function TerritoryUtil.getPlayersinTerritory(Part: Part): {[number]: Player}
             continue
         end
 
-        local gjk = GJK.new(territory.Set, {HumanoidRootPart.Position}, territory.CFrame.Position, HumanoidRootPart.Position, PointCloud, PointCloud)
+        local gjk = GJK.new(Block.Set, {HumanoidRootPart.Position}, Block.CFrame.Position, HumanoidRootPart.Position, PointCloud, PointCloud)
         if not gjk:IsColliding() then
             continue
         end
@@ -82,6 +81,8 @@ function TerritoryUtil.getPlayerTerritory(Player: Player): Part?
 			return Part
 		end
 	end
+
+    return nil
 end
 
 return TerritoryUtil
