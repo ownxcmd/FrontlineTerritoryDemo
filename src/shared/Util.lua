@@ -1,7 +1,3 @@
--- // services
-
-local RunService = game:GetService("RunService")
-
 -- // module body
 
 local Util = {}
