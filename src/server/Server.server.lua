@@ -24,6 +24,6 @@ for _, Module in ipairs(ServerModules:GetChildren()) do
     local ModuleData = require(Module)
 
     if type(ModuleData) == "table" and ModuleData.init then
-        ModuleData.init()
+        task.spawn(ModuleData.init)
     end
 end
